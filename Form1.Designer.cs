@@ -1,6 +1,6 @@
 ﻿namespace WorkWithContacts
 {
-    partial class Form1
+    partial class ContactForm
     {
         /// <summary>
         /// Обязательная переменная конструктора.
