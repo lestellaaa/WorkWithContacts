@@ -14,9 +14,8 @@ namespace WorkWithContacts
         private TextBox searchTextBox;
         private Button searchButton;
         public virtual string PlaceholderText { get; set; }
-
-
         private ListBox contactsListBox;
+
         public ContactForm()
         {
             this.Text = "Управление контактами";
@@ -25,7 +24,7 @@ namespace WorkWithContacts
 
             nameTextBox = new TextBox
             {
-                Location = new System.Drawing.Point(10, 10),
+                Location = new Point(10, 10),
                 Width = 150,
                 Text = "Имя",
                 ForeColor = Color.Gray
@@ -35,17 +34,18 @@ namespace WorkWithContacts
 
             phoneNumberTextBox = new TextBox
             {
-                Location = new System.Drawing.Point(170, 10),
+                Location = new Point(170, 10),
                 Width = 150,
                 Text = "Телефон",
                 ForeColor = Color.Gray
             };
             phoneNumberTextBox.Enter += PhoneNumberTextBox_Enter;
             phoneNumberTextBox.Leave += PhoneNumberTextBox_Leave;
+            phoneNumberTextBox.KeyPress += PhoneNumberTextBox_KeyPress; // Валидация добавлена
 
             addContactButton = new Button
             {
-                Location = new System.Drawing.Point(10, 40),
+                Location = new Point(10, 40),
                 Text = "Добавить",
                 Width = 100
             };
@@ -53,7 +53,7 @@ namespace WorkWithContacts
 
             removeContactButton = new Button
             {
-                Location = new System.Drawing.Point(120, 40),
+                Location = new Point(120, 40),
                 Text = "Удалить",
                 Width = 100
             };
@@ -61,7 +61,7 @@ namespace WorkWithContacts
 
             searchTextBox = new TextBox
             {
-                Location = new System.Drawing.Point(10, 70),
+                Location = new Point(10, 70),
                 Width = 200,
                 Text = "Поиск",
                 ForeColor = Color.Gray
@@ -71,7 +71,7 @@ namespace WorkWithContacts
 
             searchButton = new Button
             {
-                Location = new System.Drawing.Point(220, 70),
+                Location = new Point(220, 70),
                 Text = "Искать",
                 Width = 80
             };
@@ -79,7 +79,7 @@ namespace WorkWithContacts
 
             contactsListBox = new ListBox
             {
-                Location = new System.Drawing.Point(10, 100),
+                Location = new Point(10, 100),
                 Width = 450,
                 Height = 200
             };
@@ -95,6 +95,7 @@ namespace WorkWithContacts
             contactManager = new ContactManager();
             UpdateContactsList();
         }
+
         private void NameTextBox_Enter(object sender, EventArgs e)
         {
             if (nameTextBox.Text == "Имя")
@@ -148,6 +149,21 @@ namespace WorkWithContacts
                 searchTextBox.ForeColor = Color.Gray;
             }
         }
+
+        // Разрешает ввод только цифр в поле телефона
+        private void PhoneNumberTextBox_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            // Разрешаем управляющие символы (Backspace, Delete, стрелки и тд)
+            if (char.IsControl(e.KeyChar))
+                return;
+
+            // Разрешаем только цифры 0-9
+            if (!char.IsDigit(e.KeyChar))
+            {
+                e.Handled = true; // Отменяем ввод недопустимого символа
+            }
+        }
+
         private void UpdateContactsList()
         {
             contactsListBox.Items.Clear();
@@ -156,14 +172,16 @@ namespace WorkWithContacts
                 contactsListBox.Items.Add($"{contact.Name} - {contact.PhoneNumber}");
             }
         }
+
         private void AddContactButton_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(nameTextBox.Text) ||
-            string.IsNullOrEmpty(phoneNumberTextBox.Text))
+            if (string.IsNullOrEmpty(nameTextBox.Text) || nameTextBox.Text == "Имя" ||
+                string.IsNullOrEmpty(phoneNumberTextBox.Text) || phoneNumberTextBox.Text == "Телефон")
             {
                 MessageBox.Show("Заполните все поля!");
                 return;
             }
+
             Contact newContact = new Contact(nameTextBox.Text, phoneNumberTextBox.Text);
             try
             {
@@ -171,13 +189,13 @@ namespace WorkWithContacts
                 nameTextBox.Clear();
                 phoneNumberTextBox.Clear();
                 UpdateContactsList();
-
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
         }
+
         private void RemoveContactButton_Click(object sender, EventArgs e)
         {
             if (contactsListBox.SelectedIndex == -1)
@@ -185,14 +203,15 @@ namespace WorkWithContacts
                 MessageBox.Show("Выберите контакт для удаления!");
                 return;
             }
+
             string selectedItem = contactsListBox.SelectedItem.ToString();
             string[] parts = selectedItem.Split(new[] { '-' }, StringSplitOptions.None);
             if (parts.Length >= 2)
             {
                 string name = parts[0].Trim();
                 string phoneNumber = parts[1].Trim();
-                var contactToRemove = contactManager.Contacts.Find(c => c.Name == name &&
-                c.PhoneNumber == phoneNumber);
+                var contactToRemove = contactManager.Contacts.Find(c => c.Name == name && c.PhoneNumber == phoneNumber);
+
                 if (contactToRemove != null)
                 {
                     try
@@ -207,20 +226,21 @@ namespace WorkWithContacts
                 }
             }
         }
+
         private void SearchButton_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(searchTextBox.Text))
+            if (string.IsNullOrEmpty(searchTextBox.Text) || searchTextBox.Text == "Поиск")
             {
                 UpdateContactsList();
                 return;
             }
+
             var searchResults = contactManager.SearchContacts(searchTextBox.Text);
             contactsListBox.Items.Clear();
             foreach (var contact in searchResults)
             {
-
                 contactsListBox.Items.Add($"{contact.Name} - {contact.PhoneNumber}");
             }
         }
-        }
     }
+}
