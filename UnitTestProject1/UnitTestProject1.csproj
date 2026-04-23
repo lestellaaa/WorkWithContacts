@@ -51,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UnitTestNegativeTests.cs" />
     <Compile Include="UnitTestForBoundaryValues.cs" />
     <Compile Include="UnitTestForContactForm.cs" />
     <Compile Include="UnitTestForContact.cs" />
