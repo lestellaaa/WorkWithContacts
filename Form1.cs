@@ -13,7 +13,6 @@ namespace WorkWithContacts
         private Button removeContactButton;
         private TextBox searchTextBox;
         private Button searchButton;
-        public virtual string PlaceholderText { get; set; }
         private ListBox contactsListBox;
 
         public ContactForm()
@@ -41,7 +40,7 @@ namespace WorkWithContacts
             };
             phoneNumberTextBox.Enter += PhoneNumberTextBox_Enter;
             phoneNumberTextBox.Leave += PhoneNumberTextBox_Leave;
-            phoneNumberTextBox.KeyPress += PhoneNumberTextBox_KeyPress; // Валидация добавлена
+            phoneNumberTextBox.KeyPress += PhoneNumberTextBox_KeyPress;
 
             addContactButton = new Button
             {
@@ -150,18 +149,10 @@ namespace WorkWithContacts
             }
         }
 
-        // Разрешает ввод только цифр в поле телефона
         private void PhoneNumberTextBox_KeyPress(object sender, KeyPressEventArgs e)
         {
-            // Разрешаем управляющие символы (Backspace, Delete, стрелки и тд)
-            if (char.IsControl(e.KeyChar))
-                return;
-
-            // Разрешаем только цифры 0-9
-            if (!char.IsDigit(e.KeyChar))
-            {
-                e.Handled = true; // Отменяем ввод недопустимого символа
-            }
+            if (char.IsControl(e.KeyChar)) return;
+            if (!char.IsDigit(e.KeyChar)) e.Handled = true;
         }
 
         private void UpdateContactsList()
@@ -173,8 +164,10 @@ namespace WorkWithContacts
             }
         }
 
+        // 🔹 ИСПРАВЛЕННЫЙ МЕТОД ДОБАВЛЕНИЯ
         private void AddContactButton_Click(object sender, EventArgs e)
         {
+            // 1. Проверка заполненности
             if (string.IsNullOrEmpty(nameTextBox.Text) || nameTextBox.Text == "Имя" ||
                 string.IsNullOrEmpty(phoneNumberTextBox.Text) || phoneNumberTextBox.Text == "Телефон")
             {
@@ -182,13 +175,32 @@ namespace WorkWithContacts
                 return;
             }
 
-            Contact newContact = new Contact(nameTextBox.Text, phoneNumberTextBox.Text);
+            // 2. Проверка формата телефона (начинается с 8, ровно 11 цифр)
+            string phone = phoneNumberTextBox.Text;
+            if (!phone.StartsWith("89") || phone.Length != 11)
+            {
+                MessageBox.Show("Номер телефона должен начинаться с '89' и содержать 11 цифр!");
+                return;
+            }
+
+            // 3. 🔥 СНАЧАЛА ВОПРОС, ПОТОМ ДЕЙСТВИЕ
+            DialogResult result = MessageBox.Show(
+                "Вы уверены, что вы хотите добавить контакт?",
+                "Подтверждение",
+                MessageBoxButtons.YesNo);
+
+            // 4. Если нажали "Нет" -> ВЫХОДИМ, контакт НЕ добавляется
+            if (result != DialogResult.Yes)
+            {
+                return;
+            }
+
+            // 5. Только после нажатия "Да" -> добавляем в файл и список
             try
             {
-                contactManager.AddContact(newContact);
-                nameTextBox.Clear();
-                phoneNumberTextBox.Clear();
+                contactManager.AddContact(new Contact(nameTextBox.Text, phone));
                 UpdateContactsList();
+                ClearInputFields();
             }
             catch (Exception ex)
             {
@@ -201,6 +213,11 @@ namespace WorkWithContacts
             if (contactsListBox.SelectedIndex == -1)
             {
                 MessageBox.Show("Выберите контакт для удаления!");
+                return;
+            }
+
+            if (MessageBox.Show("Вы уверены, что хотите удалить этот контакт?", "Подтверждение", MessageBoxButtons.YesNo) != DialogResult.Yes)
+            {
                 return;
             }
 
@@ -231,7 +248,7 @@ namespace WorkWithContacts
         {
             if (string.IsNullOrEmpty(searchTextBox.Text) || searchTextBox.Text == "Поиск")
             {
-                UpdateContactsList();
+                MessageBox.Show("Заполните поле!");
                 return;
             }
 
@@ -241,6 +258,14 @@ namespace WorkWithContacts
             {
                 contactsListBox.Items.Add($"{contact.Name} - {contact.PhoneNumber}");
             }
+        }
+
+        private void ClearInputFields()
+        {
+            nameTextBox.Text = "Имя";
+            nameTextBox.ForeColor = Color.Gray;
+            phoneNumberTextBox.Text = "Телефон";
+            phoneNumberTextBox.ForeColor = Color.Gray;
         }
     }
 }
